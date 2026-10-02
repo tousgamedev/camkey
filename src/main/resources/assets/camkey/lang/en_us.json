@@ -1,1 +1,25 @@
-{}
+{
+  "camkey.add.success": "Captured keyframe into '%s' (%s total)",
+  "camkey.use.success": "Now using '%s'",
+  "camkey.delete.success": "Deleted last keyframe (%s remaining)",
+  "camkey.list.empty": "No sequences saved yet",
+  "camkey.list.result": "Sequences: %s",
+  "camkey.play.started": "Playing '%s' over %s seconds",
+  "camkey.play.cancelled": "Playback cancelled",
+  "camkey.playback.hud": "Playing... (Press %s to Cancel)",
+
+  "camkey.error.no_active_sequence": "No active sequence. Use /camkey add <name> to start one, or /camkey use to load one.",
+  "camkey.error.unknown_sequence": "No sequence named '%s'",
+  "camkey.error.corrupt_sequence": "'%s' exists but could not be read — it may be corrupted. Check the JSON file by hand, or delete it to start fresh.",
+  "camkey.error.sequence_empty": "'%s' has no keyframes to delete",
+  "camkey.error.already_playing": "Already playing. Use the playback key to cancel it first",
+  "camkey.error.not_playing": "Not currently playing",
+  "camkey.error.insufficient_keyframes": "'%s' needs at least 2 keyframes to play back",
+  "camkey.error.invalid_duration": "Invalid duration: %s seconds",
+
+  "key.categories.camkey": "CamKey",
+  "key.camkey.add": "Capture Keyframe",
+  "key.camkey.delete": "Delete Last Keyframe",
+  "key.camkey.play_preview": "Toggle Playback (Preview)",
+  "key.camkey.play_record": "Toggle Playback (Record)"
+}

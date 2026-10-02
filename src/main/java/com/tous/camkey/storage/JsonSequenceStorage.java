@@ -59,6 +59,11 @@ public class JsonSequenceStorage implements SequenceStorage {
     }
 
     @Override
+    public boolean exists(String name) {
+        return Files.isRegularFile(resolveSequenceFile(name));
+    }
+
+    @Override
     public List<String> listNames() {
         if (!Files.isDirectory(baseDirectory)) {
             return List.of();

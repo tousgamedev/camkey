@@ -75,12 +75,17 @@ shot, so re-typing a sequence name for every capture would be disruptive:
     for correcting a sequence you're not currently active on. Fails
     gracefully if there's no active sequence, or it's already empty.
 3. Playback stays available both ways: `/camkey play <name> <seconds>` for
-   full control (replaying an older sequence, a custom duration), and a
-   playback keybind as a shortcut that plays the active/last sequence at a
-   sensible default duration (config-driven). The keybind **toggles**: press
-   to start playback, press again to cancel it (whether mid-move or frozen
-   on the final keyframe after it finished — see below). The `/camkey play`
-   command does not toggle; invoking it while playback is already running
+   full control (replaying an older sequence, a custom duration), and two
+   playback keybinds as shortcuts that play the active/last sequence at a
+   sensible default duration (config-driven) — **Toggle Playback (Preview)**
+   shows the on-screen "Playing... (Press X to Cancel)" hint, **Toggle
+   Playback (Record)** plays identically but suppresses that hint, so a
+   take intended for actual recording never has it baked into the footage.
+   Both **toggle**: press to start playback, press again to cancel it
+   (whether mid-move or frozen on the final keyframe after it finished —
+   see below); either keybind cancels an in-progress playback regardless of
+   which one started it. The `/camkey play` command does not toggle, and
+   always shows the hint; invoking it while playback is already running
    fails gracefully per the production-readiness requirements rather than
    canceling, since a typed command is a deliberate action, not a quick
    press meant to be hit twice.
@@ -134,9 +139,18 @@ Rules:
   total duration, not per-keyframe times.
 
 - [x] End-of-playback behavior: stay at last keyframe vs return to start —
-  **stay**, via a camera-only render override (the player entity never
-  actually moves, so there's nothing to "return" to). The view freezes on
-  the final keyframe until the playback keybind is pressed again to cancel.
+  **stay**. The view freezes on the final keyframe until a playback keybind
+  is pressed again to cancel. Implementation note (revised after reading
+  decompiled `Camera.java`): `Camera.setPosition`/`setRotation` are
+  `protected` and no NeoForge event exposes camera position at all, so a
+  true camera-only override isn't possible through public API. Position is
+  instead driven by moving the player entity itself each tick
+  (`Entity.moveTo`), rotation is reinforced every render frame via
+  `ViewportEvent.ComputeCameraAngles` for mouse-jitter immunity, and a
+  temporary Spectator-gamemode switch (restored after) prevents collision/
+  fall damage in place of the "entity never moves" protection a true
+  camera-only override would have given for free — see
+  `CamKeyPlaybackHandler`.
 - [x] Player input during playback: blocked vs cancels playback —
   **blocked**. Movement input is ignored while the camera is overridden
   (the player can't see their real surroundings, so letting them move blind
@@ -145,9 +159,15 @@ Rules:
 
 No pending decisions — see "User flow" above for how these fit together.
 
-Known constraint: camera motion must be interpolated per **render frame**
-(using partial tick), not per server tick. 20 TPS teleporting is visibly
-jerky on a recording and counts as a hack around the engine.
+Known constraint (revised after reading decompiled `Camera.java`): position
+and rotation only need updating once per **server tick**, not per render
+frame — `Camera.setup()` already lerps between each tick's old/new entity
+position and rotation using partial tick, the same mechanism vanilla uses
+for every entity, so per-tick updates render smoothly for free. The one
+exception is rotation specifically, reinforced every render frame via
+`ComputeCameraAngles` — not for tick-rate smoothness, but because mouse
+look writes to the entity's rotation continuously between ticks and would
+otherwise visibly jitter if not overridden on every frame it's displayed.
 
 ## Production-readiness requirements
 

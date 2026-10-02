@@ -11,5 +11,7 @@ public interface SequenceStorage {
 
     Optional<CameraSequence> load(String name);
 
+    boolean exists(String name);
+
     List<String> listNames();
 }
