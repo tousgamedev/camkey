@@ -8,9 +8,18 @@ A lightweight Minecraft mod that adds a camera keyframe & playback system for
 cinematic recording sessions. A producer captures named camera positions, then
 plays them back as a smooth camera move.
 
-- `/camkey add <sequence>` — capture current camera position + rotation as a keyframe appended to `<sequence>`
+- `/camkey add <sequence>` — capture current camera position + rotation as a keyframe appended to `<sequence>` (creates it if new, resumes it if it exists; either way `<sequence>` becomes the active sequence)
+- `/camkey use <sequence>` — switch the active sequence to an existing `<sequence>` without capturing a keyframe; fails gracefully if `<sequence>` doesn't exist (points at `/camkey add` instead, since `use` never creates)
 - `/camkey play <sequence> <seconds>` — play the sequence back, interpolated, over the given duration
+- `/camkey delete <sequence>` — remove the most recently added keyframe from `<sequence>` (repeatable to pop more than one, in order)
+- `/camkey list` — read-only; shows existing sequences and their keyframe counts (needed since the active sequence is in-memory only and doesn't survive a world reload)
 - Sequences must persist across world reloads
+- Every successful action reports a clear chat confirmation, not just failures
+  (e.g. "keyframe captured (3 total)", "now using intro", "playing intro (10s)",
+  "cancelled", "deleted last keyframe (2 remaining)") — several triggers are
+  keybinds with no other UI, so silent success is not acceptable.
+
+See "User flow" below for how the command and the keybind work together.
 
 This is a time-boxed (~3–4 hr) technical assessment. Favor a small, clean
 foundation over features. Reviewers grade separation of concerns, correct
@@ -43,6 +52,48 @@ If you are not certain a class, method, or event exists in NeoForge 21.1.x,
 **say so explicitly** rather than guessing. Name the exact event/class you are
 relying on in your explanation so it can be verified.
 
+## User flow (UX)
+
+Hybrid command + keybind, chosen to match how Minecraft camera tools (e.g.
+Replay Mod's path editor) already work — a producer is mid-flight framing a
+shot, so re-typing a sequence name for every capture would be disruptive:
+
+1. `/camkey add <name>` starts/names a sequence and captures the first
+   keyframe. This is the one point where a name is required, and a command
+   is the only clean way to supply it (a keybind has no argument slot).
+   `/camkey use <name>` is the command-only counterpart that switches the
+   active sequence to an existing one *without* capturing — for when you've
+   found a sequence via `/camkey list` (e.g. after a world reload reset the
+   in-memory active pointer) but aren't yet in position to add to it. `use`
+   never creates; only `add` does.
+2. A keybind captures another keyframe appended to whichever sequence is
+   currently **active** (the one started in step 1). No GUI, no re-typing —
+   just "capture here."
+2a. A separate delete-last keybind pops the most recent keyframe off the
+    active sequence — pressing it repeatedly pops further back, in order.
+    `/camkey delete <name>` is the command equivalent for a named sequence,
+    for correcting a sequence you're not currently active on. Fails
+    gracefully if there's no active sequence, or it's already empty.
+3. Playback stays available both ways: `/camkey play <name> <seconds>` for
+   full control (replaying an older sequence, a custom duration), and a
+   playback keybind as a shortcut that plays the active/last sequence at a
+   sensible default duration (config-driven). The keybind **toggles**: press
+   to start playback, press again to cancel it (whether mid-move or frozen
+   on the final keyframe after it finished — see below). The `/camkey play`
+   command does not toggle; invoking it while playback is already running
+   fails gracefully per the production-readiness requirements rather than
+   canceling, since a typed command is a deliberate action, not a quick
+   press meant to be hit twice.
+
+"Active sequence" is the one piece of session state this implies — the
+`command`/`capture` layer needs to track which sequence (if any) is open for
+appending, and the keybind must fail gracefully (clear chat message, not a
+silent no-op) if nothing is active.
+
+Rotation interpolates **in transit**, concurrently with position, not after
+arrival — see the `interpolation` angle-wrapping note below; a move-then-
+snap-look split isn't "smooth" per the spec's requirement.
+
 ## Architecture
 
 Separation of concerns is a graded requirement. No god classes.
@@ -61,13 +112,38 @@ Rules:
 - Interpolation must be swappable (easing is an interface/strategy, not an if-chain).
 - Design for later extension: rotation easing, multiple simultaneous cameras. Don't build them, don't block them.
 
-## Decisions (pending — do not assume; ask)
+## Decisions
 
-- [ ] Client-side vs server-side command registration
-- [ ] Storage: per-world `SavedData` (NBT) vs JSON file in the world folder
-- [ ] Duration split: equal per segment vs weighted by distance
-- [ ] End-of-playback behavior: stay at last keyframe vs return to start
-- [ ] Player input during playback: blocked vs cancels playback
+- [x] Client-side vs server-side command registration — **client-side**. Needed for
+  the client render camera (incl. spectator free-fly); multiplayer sync is out of
+  scope so the lack of server-side visibility/permissions doesn't matter.
+- [x] Storage: per-world `SavedData` (NBT) vs JSON file in the world folder —
+  **JSON file**. Backable up and hand-editable independently of the world save;
+  see `readme.txt`. `storage` stays behind an interface regardless.
+- [x] Keyframe capture UX: command-only vs keybind-only vs hybrid —
+  **hybrid**. `/camkey add <name>` starts/names a sequence; a keybind appends
+  to whichever sequence is active. See "User flow" above.
+- [x] Rotation interpolation: in transit vs snap-after-arrival — **in
+  transit**, same per-frame `t` as position.
+- [x] Duration split: equal per segment vs weighted by distance — **weighted
+  by distance** (arc-length parameterization). Required to satisfy the
+  constant-velocity requirement: equal-per-segment makes speed vary with
+  keyframe spacing. Per-keyframe manual timing (the "real" animation-tool
+  approach) was considered but rejected as too much added command surface
+  for the time box — the spec's `/camkey play <seq> <seconds>` takes one
+  total duration, not per-keyframe times.
+
+- [x] End-of-playback behavior: stay at last keyframe vs return to start —
+  **stay**, via a camera-only render override (the player entity never
+  actually moves, so there's nothing to "return" to). The view freezes on
+  the final keyframe until the playback keybind is pressed again to cancel.
+- [x] Player input during playback: blocked vs cancels playback —
+  **blocked**. Movement input is ignored while the camera is overridden
+  (the player can't see their real surroundings, so letting them move blind
+  would be disorienting and pointless). The playback keybind is the one
+  input that acts on playback state: it toggles start/cancel.
+
+No pending decisions — see "User flow" above for how these fit together.
 
 Known constraint: camera motion must be interpolated per **render frame**
 (using partial tick), not per server tick. 20 TPS teleporting is visibly
