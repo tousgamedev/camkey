@@ -1,4 +1,4 @@
-package com.tous.camkey.command;
+package com.tous.camkey.client;
 
 import java.nio.file.Path;
 
@@ -10,6 +10,8 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 
 import com.tous.camkey.CamKey;
+import com.tous.camkey.CamKeyConfig;
+import com.tous.camkey.session.CamKeySession;
 import com.tous.camkey.storage.JsonSequenceStorage;
 
 @EventBusSubscriber(modid = CamKey.MODID, value = Dist.CLIENT)
@@ -35,7 +37,7 @@ public final class CamKeySessionHolder {
             return;
         }
         Path worldPath = minecraft.getSingleplayerServer().getWorldPath(LevelResource.ROOT).resolve(STORAGE_DIR_NAME);
-        session = new CamKeySession(new JsonSequenceStorage(worldPath));
+        session = newSession(worldPath);
     }
 
     @SubscribeEvent
@@ -44,7 +46,10 @@ public final class CamKeySessionHolder {
     }
 
     private static CamKeySession newFallbackSession() {
-        return new CamKeySession(
-                new JsonSequenceStorage(Minecraft.getInstance().gameDirectory.toPath().resolve("camkey-data")));
+        return newSession(Minecraft.getInstance().gameDirectory.toPath().resolve("camkey-data"));
+    }
+
+    private static CamKeySession newSession(Path storageDirectory) {
+        return new CamKeySession(new JsonSequenceStorage(storageDirectory), CamKeyConfig.DEFAULT_PLAYBACK_SECONDS::get);
     }
 }

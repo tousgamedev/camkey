@@ -1,4 +1,4 @@
-package com.tous.camkey.command;
+package com.tous.camkey.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 

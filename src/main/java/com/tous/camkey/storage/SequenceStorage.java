@@ -7,7 +7,8 @@ import com.tous.camkey.model.CameraSequence;
 
 public interface SequenceStorage {
 
-    void save(CameraSequence sequence);
+    /** Returns false (and logs why) if the sequence could not be written. */
+    boolean save(CameraSequence sequence);
 
     Optional<CameraSequence> load(String name);
 
