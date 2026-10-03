@@ -10,13 +10,16 @@ technical assessment.
 
 What This Is
 ==========
-A producer flies to a spot, presses a key to capture it as a named
-"keyframe" (a position + the direction you're looking), flies to the next
-spot and captures another, and so on. Once a sequence has at least two
-keyframes, it can be played back — the camera smoothly glides between
-every captured spot, over however many seconds you choose, instead of
-jump-cutting between them. Sequences are saved automatically and are still
-there the next time the world is loaded.
+A producer names a camera move (a "sequence"), flies to a spot, presses a
+key to capture it as a "keyframe" (a position + the direction you're
+looking), flies to the next spot and captures another, and so on. Once a
+sequence has at least two keyframes, it can be played back — the camera
+smoothly glides between every captured spot, over however many seconds you
+choose, instead of jump-cutting between them. Sequences are saved
+automatically and are still there the next time the world is loaded.
+
+**Demo:** [camkey demo.mp4](camkey%20demo.mp4) — capturing keyframes and
+playing them back in-game.
 
 How to Build & Run
 ==========
