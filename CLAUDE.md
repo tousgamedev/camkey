@@ -9,11 +9,13 @@ cinematic recording sessions. A producer captures named camera positions, then
 plays them back as a smooth camera move.
 
 - `/camkey add <sequence>` — capture current camera position + rotation as a keyframe appended to `<sequence>` (creates it if new, resumes it if it exists; either way `<sequence>` becomes the active sequence)
+- `/camkey add` (no name) — capture a keyframe into the active sequence; the command equivalent of the capture keybind, failing gracefully if nothing is active
 - `/camkey use <sequence>` — switch the active sequence to an existing `<sequence>` without capturing a keyframe; fails gracefully if `<sequence>` doesn't exist (points at `/camkey add` instead, since `use` never creates)
 - `/camkey play <sequence> [duration]` — play the sequence back, interpolated, over the given duration (config default if omitted)
 - `/camkey playactive [duration]` — same, for the active sequence; fails gracefully if there is none
 - `[duration]` is a number with an optional unit word: none or `second(s)` = seconds, `minute(s)` = ×60 (so the spec's own example `/camkey play intro 10 seconds` works). Unit conversion happens in `command` (`DurationUnit`); everything past it works in seconds.
 - `/camkey delete <sequence>` — remove the most recently added keyframe from `<sequence>` (repeatable to pop more than one, in order)
+- `/camkey delete` (no name) — same, for the active sequence; the command equivalent of the delete-last keybind, failing gracefully if nothing is active or it's empty
 - `/camkey list` — read-only; shows existing sequences and their keyframe counts (needed since the active sequence is in-memory only and doesn't survive a world reload)
 - Sequences must persist across world reloads
 - Every successful action reports a clear chat confirmation, not just failures
@@ -214,6 +216,13 @@ puts Minecraft's libraries (Gson, SLF4J) on the test classpath. Tests live in
 (interpolation, playback timing, `CamKeySession` via an in-memory
 `SequenceStorage`, `JsonSequenceStorage` via a temp dir). `.\gradlew.bat
 build` runs them.
+
+## Assumed environment
+
+Single-player, **Creative mode** (a filming tool). Playback leaves the player
+at the last keyframe; in Survival that could mean fall or suffocation damage
+once Spectator is restored. Accepted as an assumption (documented in the
+README) rather than handled.
 
 ## Out of scope (do not build)
 

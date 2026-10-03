@@ -54,10 +54,12 @@ your game directory (created on first launch).
 | Command | What it does |
 |---|---|
 | `/camkey add <name>` | Starts (or resumes) a sequence by name, capturing a keyframe immediately, and makes it the active sequence |
+| `/camkey add` | Captures a keyframe into the active sequence — the command version of the Capture Keyframe keybind |
 | `/camkey use <name>` | Makes an existing sequence active *without* capturing — e.g. to resume one after a world reload |
 | `/camkey play <name> [duration]` | Plays any saved sequence, regardless of what's currently active — over exactly `duration` if given, otherwise the default duration |
 | `/camkey playactive [duration]` | Same, for the active sequence, so you don't have to retype its name |
 | `/camkey delete <name>` | Removes the most recently captured keyframe from a named sequence |
+| `/camkey delete` | Removes the most recently captured keyframe from the active sequence — the command version of the Delete Last Keyframe keybind |
 | `/camkey list` | Lists every saved sequence and how many keyframes each has (flags any that failed to load, e.g. a corrupted file, instead of hiding or ignoring them) |
 
 A duration is a number of seconds, optionally followed by a unit:
@@ -119,6 +121,11 @@ clear what the tool does in each case:
 - **"Camera position" means what you see, not where your character is
   standing.** Keyframes capture the camera's viewpoint, and playback shows
   exactly that view.
+- **You're in Creative mode.** This is a filming tool, and filming is done
+  in Creative. When playback ends, your character is left where the camera
+  stopped. In Creative that's harmless. In Survival you could fall or end up
+  inside a block if the last keyframe was mid-air or inside a wall
+  (Spectator mode is only applied while the camera is moving).
 - **Single-player only.** Per the brief, multiplayer is out of scope. The
   automatic Spectator switch and per-world saving rely on the game running
   its own local world.

@@ -45,6 +45,7 @@ public final class CamKeyCommands {
     private static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("camkey")
                 .then(Commands.literal("add")
+                        .executes(CamKeyCommands::executeAddToActive)
                         .then(Commands.argument("name", StringArgumentType.word())
                                 .executes(CamKeyCommands::executeAdd)))
                 .then(Commands.literal("use")
@@ -58,6 +59,7 @@ public final class CamKeyCommands {
                         .executes(CamKeyCommands::executePlayActiveDefaultDuration)
                         .then(durationArgument(CamKeyCommands::executePlayActive)))
                 .then(Commands.literal("delete")
+                        .executes(CamKeyCommands::executeDeleteFromActive)
                         .then(Commands.argument("name", StringArgumentType.word())
                                 .executes(CamKeyCommands::executeDelete)))
                 .then(Commands.literal("list")
@@ -83,9 +85,16 @@ public final class CamKeyCommands {
 
     private static int executeAdd(CommandContext<CommandSourceStack> context) {
         String name = StringArgumentType.getString(context, "name");
+        return report(context.getSource(), CamKeySessionHolder.session().add(name, captureCamera()));
+    }
+
+    private static int executeAddToActive(CommandContext<CommandSourceStack> context) {
+        return report(context.getSource(), CamKeySessionHolder.session().addToActive(captureCamera()));
+    }
+
+    private static Keyframe captureCamera() {
         Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-        Keyframe keyframe = CameraCapture.capture(camera);
-        return report(context.getSource(), CamKeySessionHolder.session().add(name, keyframe));
+        return CameraCapture.capture(camera);
     }
 
     private static int executeUse(CommandContext<CommandSourceStack> context) {
@@ -114,6 +123,10 @@ public final class CamKeyCommands {
     private static int executeDelete(CommandContext<CommandSourceStack> context) {
         String name = StringArgumentType.getString(context, "name");
         return report(context.getSource(), CamKeySessionHolder.session().deleteLast(name));
+    }
+
+    private static int executeDeleteFromActive(CommandContext<CommandSourceStack> context) {
+        return report(context.getSource(), CamKeySessionHolder.session().deleteLastFromActive());
     }
 
     private static int executeList(CommandContext<CommandSourceStack> context) {
