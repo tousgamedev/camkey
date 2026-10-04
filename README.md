@@ -230,6 +230,9 @@ so these stay additive:
   fixed point or entity while moving, instead of a captured rotation
   (e.g. circling a build while keeping it centered). Deferred since it
   touches both `model` and `interpolation`, not just a new command.
+- **Bezier curve keyframes for pathing** — a keyframe that calculates
+  a curved trajectory based on the previous and next node so the camera
+  travels in a series of smooth curves instead of straight lines
 
 Design Notes
 ==========
@@ -293,10 +296,3 @@ and it being caught:
   alone hadn't caught. Found by deliberately corrupting a saved JSON file
   and testing `list`/`use` against it, then fixed by having storage
   distinguish "missing" from "corrupt" everywhere a sequence is loaded.
-
-Mapping Names
-==========
-Minecraft code is referenced by Mojang's official mapping names, with
-[Parchment](https://parchmentmc.org/) layered on top for parameter names
-and javadoc. Mojang's names are covered by a specific license; see the
-reference copy at https://github.com/NeoForged/NeoForm/blob/main/Mojang.md
